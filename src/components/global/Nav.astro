@@ -1,0 +1,595 @@
+---
+import { SITE_NAME } from "@/consts.ts";
+import LogoIcon from "@/assets/graphics/clifts-logo.svg";
+import PhoneIcon from "@/assets/icons/phone.svg";
+import Button from "@/components/Button.astro";
+import ButtonMotion from "@/components/interactive/ButtonMotion.astro";
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Fix the nav over the page. */
+  overlap?: boolean;
+}
+const { render = true, overlap = false } = Astro.props;
+const links = [
+  { label: "Services", href: "/#services" },
+  { label: "Our approach", href: "/#approach" },
+  { label: "Maintenance plans", href: "/#plans" },
+  { label: "Blessing Fund", href: "/#blessing-fund" },
+];
+---
+
+{
+  render && (
+    <header class:list={["nav_wrap theme-dark", overlap && "overlap"]}>
+      <div class="nav_inner">
+        <a class="nav_brand" href="/" aria-label={`${SITE_NAME} home`}>
+          <LogoIcon class="nav_logo" aria-hidden="true" focusable="false" />
+          <strong>Clift’s</strong>
+          <span>
+            Home &amp; Air
+            <br />
+            Services LLC
+          </span>
+        </a>
+        <div class="nav_actions">
+          <nav class="nav_links" aria-label="Desktop navigation">
+            {links.map((link) => (
+              <a
+                href={link.href}
+                aria-current={Astro.url.pathname === link.href ? "page" : undefined}
+              >
+                {link.label}
+              </a>
+            ))}
+            <span class="nav_indicator" aria-hidden="true" />
+          </nav>
+          <a class="nav_contact" href="tel:+19852101659">
+            <ButtonMotion>(985) 210-1659 <PhoneIcon class="nav_contact-icon" aria-hidden="true" focusable="false" /></ButtonMotion>
+          </a>
+          <button
+            class="nav_toggle"
+            type="button"
+            aria-label="Open navigation"
+            aria-expanded="false"
+            aria-controls="main-nav"
+          >
+            <span>Menu</span>
+            <span class="nav_menu-icon" aria-hidden="true">
+              <i />
+              <i />
+            </span>
+          </button>
+        </div>
+      </div>
+      <div class="nav_drawer" hidden>
+        <div class="nav_backdrop" aria-hidden="true" />
+        <nav class="nav_menu" id="main-nav" aria-label="Main navigation" data-lenis-prevent>
+        {links.map((link, i) => (
+          <a
+            class="nav_link"
+            href={link.href}
+            aria-current={Astro.url.pathname === link.href ? "page" : undefined}
+          >
+            <span class="nav_number">{String(i + 1).padStart(2, "0")}</span>
+            {link.label}
+            <span aria-hidden="true">↗</span>
+          </a>
+        ))}
+        <div class="nav_phone">
+          <Button element="link" href="tel:+19852101659">(985) 210-1659</Button>
+        </div>
+        </nav>
+      </div>
+    </header>
+  )
+}
+<script>
+  function initNav() {
+    const nav = document.querySelector<HTMLElement>(".nav_wrap");
+    const toggle = nav?.querySelector<HTMLButtonElement>(".nav_toggle");
+    const menu = nav?.querySelector<HTMLElement>(".nav_menu");
+    const drawer = nav?.querySelector<HTMLElement>(".nav_drawer");
+    if (!nav || !toggle || !menu || !drawer || nav.dataset.ready) return;
+    nav.dataset.ready = "true";
+    const contact = nav.querySelector<HTMLElement>(".nav_contact")!;
+    const brand = nav.querySelector<HTMLElement>(".nav_brand")!;
+    const inner = nav.querySelector<HTMLElement>(".nav_inner")!;
+    const actions = nav.querySelector<HTMLElement>(".nav_actions")!;
+    const compact = window.matchMedia("(width < 64rem)");
+    const syncContact = () => {
+      const brandStyle = getComputedStyle(brand);
+      const brandParts = [...brand.children].map(element => element.getBoundingClientRect()).filter(bounds => bounds.width > 0);
+      const brandWidth = brandParts.reduce((width, bounds) => width + bounds.width, 0)
+        + (brandParts.length - 1) * (parseFloat(brandStyle.columnGap) || 0)
+        + parseFloat(brandStyle.paddingLeft) + parseFloat(brandStyle.paddingRight);
+      const required = brandWidth + contact.getBoundingClientRect().width
+        + toggle.getBoundingClientRect().width + (parseFloat(getComputedStyle(actions).columnGap) || 0);
+      const inMenu = compact.matches && required > inner.clientWidth;
+      nav.toggleAttribute("data-phone-in-menu", inMenu);
+      contact.inert = inMenu;
+      if (inMenu) contact.setAttribute("aria-hidden", "true");
+      else contact.removeAttribute("aria-hidden");
+    };
+    const contactResize = new ResizeObserver(syncContact);
+    [inner, brand, contact, toggle].forEach(element => contactResize.observe(element));
+    compact.addEventListener("change", syncContact);
+    syncContact();
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktop = nav.querySelector<HTMLElement>(".nav_links")!;
+    const indicator = desktop.querySelector<HTMLElement>(".nav_indicator")!;
+    const desktopLinks = [...desktop.querySelectorAll<HTMLAnchorElement>("a")];
+    let hovered: HTMLAnchorElement | undefined;
+    let showing = false;
+    const updateIndicator = (animate = true) => {
+      const target = hovered ?? desktopLinks.find((link) => link === document.activeElement && link.matches(":focus-visible"))
+        ?? desktopLinks.find((link) => link.hasAttribute("aria-current"));
+      desktopLinks.forEach((link) => link.toggleAttribute("data-highlighted", link === target));
+      if (!target) {
+        indicator.style.opacity = "0";
+        showing = false;
+        return;
+      }
+      const bounds = desktop.getBoundingClientRect();
+      const linkBounds = target.getBoundingClientRect();
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      indicator.style.transition = showing && animate ? "" : "none";
+      indicator.style.left = `${(linkBounds.left - bounds.left) / rem}rem`;
+      indicator.style.width = `${linkBounds.width / rem}rem`;
+      indicator.style.opacity = "1";
+      showing = true;
+    };
+    desktopLinks.forEach((link) => {
+      link.addEventListener("pointerenter", () => {
+        hovered = link;
+        updateIndicator();
+      });
+      link.addEventListener("focus", () => {
+        hovered = undefined;
+        updateIndicator();
+      });
+    });
+    desktop.addEventListener("pointerleave", () => {
+      hovered = undefined;
+      updateIndicator();
+    });
+    desktop.addEventListener("focusout", () => queueMicrotask(() => updateIndicator()));
+    const anchorLinks = [...nav.querySelectorAll<HTMLAnchorElement>(".nav_links a, .nav_menu a")];
+    const sections = desktopLinks.flatMap((link) => {
+      const url = new URL(link.href);
+      const section = url.pathname === location.pathname && url.hash
+        ? document.getElementById(decodeURIComponent(url.hash.slice(1))) : null;
+      return section ? [{ section, hash: url.hash }] : [];
+    });
+    let scrollFrame = 0;
+    let activeHash: string | undefined;
+    const syncSection = () => {
+      scrollFrame = 0;
+      if (!sections.length) return;
+      const readingLine = nav.getBoundingClientRect().bottom + window.innerHeight * 0.15;
+      let current = "";
+      for (const { section, hash } of sections) {
+        if (section.getBoundingClientRect().top <= readingLine) current = hash;
+      }
+      if (activeHash === current) return;
+      activeHash = current;
+      for (const link of anchorLinks) {
+        const url = new URL(link.href);
+        if (url.pathname !== location.pathname || !url.hash) continue;
+        if (url.hash === current) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      }
+      updateIndicator();
+    };
+    const scheduleSection = () => {
+      if (!scrollFrame) scrollFrame = requestAnimationFrame(syncSection);
+    };
+    const scrollEvents = new AbortController();
+    window.addEventListener("scroll", scheduleSection, { passive: true, signal: scrollEvents.signal });
+    window.addEventListener("resize", scheduleSection, { passive: true, signal: scrollEvents.signal });
+    window.addEventListener("hashchange", scheduleSection, { signal: scrollEvents.signal });
+    const sectionResize = new ResizeObserver(scheduleSection);
+    sections.forEach(({ section }) => sectionResize.observe(section));
+    sectionResize.observe(nav);
+    syncSection();
+    const linkResize = new ResizeObserver(() => updateIndicator(false));
+    linkResize.observe(desktop);
+    desktopLinks.forEach((link) => linkResize.observe(link));
+    document.addEventListener("astro:before-swap", () => {
+      contactResize.disconnect();
+      compact.removeEventListener("change", syncContact);
+      linkResize.disconnect();
+      sectionResize.disconnect();
+      scrollEvents.abort();
+      cancelAnimationFrame(scrollFrame);
+    }, { once: true });
+    updateIndicator(false);
+    let motion: Animation | undefined;
+    let linkAnimations: Animation[] = [];
+    const menuItems = [...menu.querySelectorAll<HTMLElement>(".nav_link, .nav_phone")];
+    const pageContent = [...document.body.children].filter((element): element is HTMLElement => element instanceof HTMLElement && element !== nav && !["SCRIPT", "STYLE"].includes(element.tagName));
+    const inertBefore = new Map<HTMLElement, boolean>();
+    const lockPage = (locked: boolean) => {
+      document.documentElement.toggleAttribute("data-nav-scroll-locked", locked);
+      if (locked) {
+        pageContent.forEach(element => {
+          if (!inertBefore.has(element)) inertBefore.set(element, element.inert);
+          element.inert = true;
+        });
+      } else {
+        inertBefore.forEach((inert, element) => { element.inert = inert; });
+        inertBefore.clear();
+      }
+    };
+    const setOpen = (open: boolean, instant = false) => {
+      if (nav.classList.contains("open") === open && !instant) return;
+      const fromHeight = drawer.hidden ? "0px" : getComputedStyle(drawer).height;
+      const itemStyles = menuItems.map(item => ({ opacity: getComputedStyle(item).opacity, transform: getComputedStyle(item).transform }));
+      motion?.cancel();
+      linkAnimations.forEach(animation => animation.cancel());
+      linkAnimations = [];
+      nav.classList.toggle("open", open);
+      menu.inert = !open;
+      lockPage(open);
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+      if (reduced.matches || instant) {
+        drawer.hidden = !open;
+        motion = undefined;
+        return;
+      }
+      drawer.hidden = false;
+      if (open) menu.scrollTop = 0;
+      motion = drawer.animate(
+        [{ height: fromHeight }, { height: open ? getComputedStyle(drawer).height : "0px" }],
+        { duration: open ? 500 : 350, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "both" },
+      );
+      linkAnimations = menuItems.map((item, index) => item.animate(
+        open ? [{ opacity: 0, transform: "translateY(1.25rem)" }, { opacity: 1, transform: "translateY(0)" }]
+          : [itemStyles[index], { opacity: 0, transform: "translateY(-0.5rem)" }],
+        { duration: open ? 420 : 160, delay: open ? 100 + index * 65 : 0, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "both" },
+      ));
+      motion.onfinish = () => {
+        drawer.hidden = !open;
+        motion?.cancel();
+        motion = undefined;
+        if (!open) {
+          linkAnimations.forEach(animation => animation.cancel());
+          linkAnimations = [];
+        }
+      };
+    };
+    const closeOnDesktop = () => { if (!compact.matches) setOpen(false, true); };
+    compact.addEventListener("change", closeOnDesktop);
+    const stopBackgroundGesture = (event: Event) => {
+      if (nav.classList.contains("open") && !(event.target instanceof Node && menu.contains(event.target))) event.preventDefault();
+    };
+    document.addEventListener("touchmove", stopBackgroundGesture, { passive: false, signal: scrollEvents.signal });
+    document.addEventListener("wheel", stopBackgroundGesture, { passive: false, signal: scrollEvents.signal });
+    document.addEventListener("astro:before-swap", () => {
+      setOpen(false, true);
+      compact.removeEventListener("change", closeOnDesktop);
+    }, { once: true });
+    toggle.addEventListener("click", () => setOpen(!nav.classList.contains("open")));
+    menu
+      .querySelectorAll("a")
+      .forEach((link) => link.addEventListener("click", () => setOpen(false)));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Tab" && nav.classList.contains("open")) {
+        const focusable = [...nav.querySelectorAll<HTMLElement>("a[href], button:not(:disabled)")].filter(element => element.getClientRects().length && getComputedStyle(element).visibility !== "hidden" && !element.closest("[inert]"));
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+      if (event.key === "Escape" && nav.classList.contains("open")) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (event.target instanceof Node && !nav.contains(event.target))
+        setOpen(false);
+    });
+  }
+  initNav();
+  document.addEventListener("astro:page-load", initNav);
+</script>
+<noscript
+  ><style>
+    .nav_wrap .nav_toggle {
+      display: none;
+    }
+    .nav_wrap .nav_drawer[hidden] {
+      display: block;
+      position: static;
+      height: auto;
+    }
+    .nav_wrap .nav_menu {
+      min-height: 0;
+      max-height: none;
+      height: auto;
+      padding-top: var(--space-6);
+    }
+  </style></noscript
+>
+<style is:global>
+  @layer components {
+    html[data-nav-scroll-locked] {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    .nav_wrap {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      &.overlap {
+        position: absolute;
+        inset: 0 0 auto;
+      }
+      .nav_inner {
+        position: relative;
+        z-index: 1;
+        background: var(--background);
+        border-bottom: var(--border-width) solid var(--border);
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        min-height: var(--nav-height);
+      }
+      .nav_brand {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--site-margin);
+        border-right: var(--border-width) solid var(--border);
+      }
+      .nav_brand strong {
+        font-size: 2.25rem;
+        line-height: 1;
+        font-weight: var(--primary-bold);
+        letter-spacing: -0.08em;
+      }
+      .nav_logo {
+        width: auto;
+        height: 2.75rem;
+        flex-shrink: 0;
+        margin-right: calc(var(--space-1) - var(--space-3));
+      }
+      .nav_brand > span {
+        font-size: 0.875rem;
+        line-height: 1.15;
+      }
+      .nav_actions {
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        gap: var(--space-4);
+        padding: 0 0 0 var(--site-margin);
+      }
+      .nav_links {
+        position: relative;
+        display: flex;
+        align-self: stretch;
+        align-items: stretch;
+        justify-content: end;
+        flex-wrap: wrap;
+        gap: var(--space-2) var(--space-4);
+        font-size: 0.875rem;
+      }
+      .nav_links a {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+        white-space: nowrap;
+        padding-block: var(--space-2);
+        font-weight: var(--primary-medium);
+        text-decoration: none;
+        transition: color 180ms ease;
+      }
+      .nav_indicator {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 0.125rem;
+        background: var(--accent-500);
+        opacity: 0;
+        pointer-events: none;
+        transition: left 280ms cubic-bezier(0.22, 1, 0.36, 1),
+          width 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease;
+      }
+      .nav_links a[data-highlighted] {
+        color: var(--accent-500);
+      }
+      .nav_toggle,
+      .nav_contact {
+        position: relative;
+        isolation: isolate;
+        align-self: stretch;
+        min-height: 2.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        gap: var(--space-5);
+        border: var(--border-width) solid var(--text);
+      }
+      .nav_toggle {
+        display: none;
+        padding-left: var(--space-3);
+        min-width: 11rem;
+      }
+      .nav_menu-icon {
+        align-self: stretch;
+        width: 3.5rem;
+        display: grid;
+        align-content: center;
+        padding: 0.875rem;
+        border-left: var(--border-width) solid var(--text);
+      }
+      .nav_menu-icon i {
+        grid-area: 1 / 1;
+        height: var(--border-width);
+        background: currentColor;
+        width: 100%;
+        transition: transform 250ms ease;
+      }
+      .nav_menu-icon i:first-child {
+        transform: translateY(-0.18rem);
+      }
+      .nav_menu-icon i:last-child {
+        transform: translateY(0.18rem);
+      }
+      &.open .nav_menu-icon i:first-child {
+        transform: rotate(45deg);
+      }
+      &.open .nav_menu-icon i:last-child {
+        transform: rotate(-45deg);
+      }
+      .nav_contact {
+        white-space: nowrap;
+        background: var(--button-background);
+        --_button-motion-inset: calc(-1 * var(--border-width));
+        color: var(--button-text);
+        font-weight: var(--primary-bold);
+        border-color: var(--button-border);
+        padding: var(--space-2) var(--space-4);
+        gap: var(--space-2);
+        justify-content: center;
+        min-width: 7rem;
+        flex-shrink: 0;
+      }
+      .nav_contact-icon {
+        width: 1.25em;
+        height: 1.25em;
+        flex-shrink: 0;
+      }
+      .nav_drawer {
+        position: fixed;
+        inset: 0 0 auto;
+        height: max(100vh, 100dvh);
+        overflow: clip;
+        display: none;
+      }
+      .nav_drawer[hidden] { display: none; }
+      .nav_backdrop {
+        position: absolute;
+        inset: 0 0 auto;
+        height: 100vh;
+        min-height: 100dvh;
+        background: var(--dark-900);
+      }
+      .nav_menu {
+        position: relative;
+        width: 100%;
+        height: 100svh;
+        min-height: 100svh;
+        max-height: 100svh;
+        padding: calc(var(--nav-height) + var(--space-6)) var(--site-margin) max(var(--space-6), env(safe-area-inset-bottom));
+        color: var(--light-100);
+        display: grid;
+        align-content: start;
+        gap: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+      .nav_link {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        font-size: var(--h4);
+        letter-spacing: var(--letter-spacing-tight);
+        border-top: var(--border-width) solid var(--dark-700);
+        padding-block: var(--space-3);
+      }
+      .nav_link > span:last-child {
+        margin-left: auto;
+      }
+      .nav_link:hover,
+      .nav_link[aria-current] {
+        color: var(--accent-500);
+      }
+      .nav_number {
+        font-size: 0.875rem;
+        letter-spacing: 0;
+        color: var(--accent-500);
+      }
+      .nav_phone {
+        display: none;
+        padding-top: var(--space-6);
+      }
+      &[data-phone-in-menu] {
+        .nav_contact {
+          position: absolute;
+          visibility: hidden;
+          pointer-events: none;
+        }
+        .nav_phone { display: block; }
+      }
+      @media (width < 64rem) {
+        .nav_links {
+          display: none;
+        }
+        .nav_toggle {
+          display: flex;
+          padding-left: 0;
+          flex-shrink: 0;
+          align-self: stretch;
+          width: 3.5rem;
+          border-width: 0 0 0 var(--border-width);
+          border-color: var(--border);
+        }
+        .nav_toggle > span:first-child,
+        .nav_contact-icon {
+          display: none;
+        }
+        .nav_inner {
+          grid-template-columns: 1fr auto;
+        }
+        .nav_brand {
+          border: 0;
+          gap: var(--space-1);
+          padding-inline: var(--space-2);
+        }
+        .nav_brand > span {
+          display: none;
+        }
+        .nav_brand strong {
+          font-size: clamp(1.5rem, 7vw, 1.875rem);
+        }
+        .nav_logo {
+          height: 1.875rem;
+          margin-right: 0;
+        }
+        .nav_actions {
+          gap: var(--space-3);
+          padding: 0;
+        }
+        .nav_toggle,
+        .nav_contact {
+          min-width: 0;
+          gap: var(--space-2);
+        }
+        .nav_menu-icon {
+          width: 100%;
+          padding-inline: 1rem;
+          border-left: 0;
+        }
+        .nav_drawer { display: block; }
+        .nav_drawer[hidden] { display: none; }
+        .nav_contact {
+          align-self: center;
+          padding-inline: var(--space-2);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .nav_menu-icon i,
+        .nav_links a,
+        .nav_indicator {
+          transition: none;
+        }
+      }
+    }
+  }
+</style>

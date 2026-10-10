@@ -1,0 +1,187 @@
+---
+import { slotContent } from "@/utils/slots.ts";
+import ButtonMotion from "@/components/interactive/ButtonMotion.astro";
+
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** System sizes and their monthly plan prices. */
+  items: { size: string; basic: number; pro: number }[];
+}
+const { render = true, items } = Astro.props;
+const content = await slotContent(Astro.slots);
+---
+
+{render && items?.length > 0 && content && (
+  <div class="plan-size_wrap">
+    <div class="plan-size_toolbar">
+      <div class="plan-size_selector">
+    <div class="plan-size_options" role="group" aria-label="System size">
+      <span class="plan-size_indicator" aria-hidden="true" />
+      {items.map((item, index) => (
+        <button type="button" style={{ gridColumn: index + 1 }} aria-pressed={index === 0} data-basic={item.basic} data-pro={item.pro} data-size={item.size}
+          value={item.size.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}>
+          <ButtonMotion>{item.size}</ButtonMotion>
+        </button>
+      ))}
+    </div>
+      </div>
+    </div>
+    <Fragment set:html={content} />
+    <p class="sr-only" role="status" data-plan-announcement />
+  </div>
+)}
+
+<script>
+  function initPlanSizes() {
+    document.querySelectorAll<HTMLElement>(".plan-size_wrap").forEach((root) => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "true";
+      const buttons = [...root.querySelectorAll<HTMLButtonElement>(".plan-size_options button")];
+      const indicator = root.querySelector<HTMLElement>(".plan-size_indicator")!;
+      const basic = root.querySelector<HTMLElement>('[data-plan="basic"] [data-plan-price]')!;
+      const pro = root.querySelector<HTMLElement>('[data-plan="pro"] [data-plan-price]')!;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let frame = 0;
+      let numberMotions: Animation[] = [];
+      const select = (button: HTMLButtonElement, animate: boolean) => {
+        cancelAnimationFrame(frame);
+        numberMotions.forEach((motion) => motion.cancel());
+        numberMotions = [];
+        const targets = [Number(button.dataset.basic), Number(button.dataset.pro)];
+        const numbers = [basic, pro];
+        const starts = numbers.map((number) => Number(number.textContent?.replace("$", "")));
+        buttons.forEach((option) => option.setAttribute("aria-pressed", String(option === button)));
+        root.querySelectorAll<HTMLElement>("[data-plan-size]").forEach(label => {
+          label.textContent = button.dataset.size ?? "";
+        });
+        indicator.style.transition = animate ? "" : "none";
+        indicator.style.transform = `translateX(${buttons.indexOf(button) * 100}%)`;
+        const url = new URL(location.href);
+        url.searchParams.set("system-size", button.value);
+        history.replaceState(history.state, "", url);
+        const announce = () => {
+          root.querySelector("[data-plan-announcement]")!.textContent =
+            `${button.querySelector(".button-motion_label")?.textContent?.trim()}: Basic PM $${targets[0]} per month. PRO PM $${targets[1]} per month.`;
+        };
+        if (!animate || reduced.matches) {
+          numbers.forEach((number, i) => number.textContent = `$${targets[i]}`);
+          announce();
+          return;
+        }
+        const start = performance.now();
+        let lastStep = -Infinity;
+        const displayed = [...starts];
+        const tick = (now: number) => {
+          const progress = Math.min((now - start) / 520, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          if (now - lastStep >= 45 || progress === 1) {
+            lastStep = now;
+            numbers.forEach((number, i) => {
+              const value = Math.round(starts[i] + (targets[i] - starts[i]) * eased);
+              if (value === displayed[i]) return;
+              displayed[i] = value;
+              number.textContent = `$${value}`;
+              numberMotions[i]?.cancel();
+              const direction = targets[i] >= starts[i] ? -1 : 1;
+              const landed = value === targets[i];
+              numberMotions[i] = number.animate(
+                landed ? [
+                  { transform: "scale(0.97)", offset: 0 },
+                  { transform: "scale(1.045)", offset: 0.4 },
+                  { transform: "scale(0.995)", offset: 0.75 },
+                  { transform: "scale(1)", offset: 1 },
+                ] : [
+                  { transform: `translateY(${direction * 0.045}em) scale(0.985)` },
+                  { transform: "translateY(0) scale(1)" },
+                ],
+                { duration: landed ? 260 : 100, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+              );
+            });
+          }
+          if (progress < 1) frame = requestAnimationFrame(tick);
+          else announce();
+        };
+        frame = requestAnimationFrame(tick);
+      };
+      buttons.forEach((button) => button.addEventListener("click", () => {
+        if (button.getAttribute("aria-pressed") !== "true") select(button, true);
+      }));
+      const saved = new URLSearchParams(location.search).get("system-size");
+      const selected = buttons.find((button) => button.value === saved);
+      if (selected) select(selected, false);
+      document.addEventListener("astro:before-swap", () => {
+        cancelAnimationFrame(frame);
+        numberMotions.forEach((motion) => motion.cancel());
+      }, { once: true });
+    });
+  }
+  initPlanSizes();
+  document.addEventListener("astro:page-load", initPlanSizes);
+</script>
+
+<style is:global>
+  @layer components {
+    .plan-size_wrap {
+      display: grid;
+      gap: var(--space-4);
+      width: 100%;
+      .plan-size_toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-5);
+      }
+      .plan-size_selector {
+        display: grid;
+        gap: var(--space-2);
+      }
+      .plan-size_label {
+        font-size: var(--text-small);
+        line-height: 1.5;
+        color: var(--text-2);
+      }
+      .plan-size_options {
+        display: grid;
+        grid-auto-columns: 1fr;
+        justify-self: start;
+        max-width: 100%;
+        padding: var(--space-1);
+        background: var(--dark-800);
+      }
+      .plan-size_indicator {
+        grid-area: 1 / 1;
+        min-width: 0;
+        background: var(--light-100);
+        pointer-events: none;
+        transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .plan-size_options button {
+        --button-background-between: transparent;
+        --button-background-hover: transparent;
+        --button-text-hover: currentColor;
+        isolation: isolate;
+        position: relative;
+        grid-row: 1;
+        min-width: 0;
+        min-height: 2.75rem;
+        padding: var(--space-3) var(--space-4);
+        font-size: 0.875rem;
+        font-weight: var(--primary-medium);
+        color: var(--text);
+        transition: color 200ms ease;
+        &[aria-pressed="true"] {
+          color: var(--dark-900);
+        }
+        &:focus-visible { outline-offset: calc(-1 * var(--space-1)); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .plan-size_indicator,
+        .plan-size_options button {
+          transition: none;
+        }
+      }
+    }
+  }
+</style>

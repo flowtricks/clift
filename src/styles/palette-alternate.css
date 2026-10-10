@@ -1,0 +1,6 @@
+:root {
+  --dark-700: color-mix(in srgb, #151b2d, white 16%);
+  --dark-800: color-mix(in srgb, #151b2d, white 8%);
+  --dark-900: #151b2d;
+  --accent-500: #e96b43;
+}

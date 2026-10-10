@@ -1,0 +1,100 @@
+---
+import { slotContent } from "@/utils/slots.ts";
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true } = Astro.props;
+const content = await slotContent(Astro.slots);
+---
+
+{render && content && (
+  <span class="button-motion_wrap">
+    <span class="button-motion_surface" aria-hidden="true" />
+    <span class="button-motion_content">
+      <span class="button-motion_label"><Fragment set:html={content} /></span>
+      <span class="button-motion_copy" aria-hidden="true" inert><Fragment set:html={content} /></span>
+    </span>
+  </span>
+)}
+
+<style is:global>
+  @layer components {
+    .button-motion_wrap {
+      display: grid;
+      gap: inherit;
+      border-radius: inherit;
+      pointer-events: none;
+      --_motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --_motion-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
+    .button-motion_surface {
+      position: absolute;
+      inset: var(--_button-motion-inset, 0);
+      border-radius: inherit;
+      overflow: clip;
+      pointer-events: none;
+      z-index: -1;
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0 -10%;
+        background: var(--button-background-hover);
+        transform-origin: 100% 0;
+        transform: translateY(120%) rotate(-12deg);
+        transition: transform 340ms var(--_motion-ease);
+      }
+      &::before {
+        background: var(--button-background-between, var(--blue-500));
+        transition-delay: 20ms;
+      }
+    }
+    .button-motion_content {
+      display: grid;
+      gap: inherit;
+      overflow: clip;
+      padding-block: 0.15em;
+      margin-block: -0.15em;
+    }
+    .button-motion_label,
+    .button-motion_copy {
+      grid-area: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: inherit;
+      transition: transform 400ms var(--_motion-spring);
+    }
+    .button-motion_label { transform-origin: 0 0; }
+    .button-motion_copy {
+      color: var(--button-text-hover, currentColor);
+      transform-origin: 100% 0;
+      transform: translate(5%, calc(100% + 1em)) rotate(3deg);
+    }
+    :where(button, a):focus-visible:not(:disabled, [aria-disabled="true"]) > .button-motion_wrap {
+      .button-motion_surface::before,
+      .button-motion_surface::after { transform: translateY(0) rotate(0); }
+      .button-motion_surface::before { transition-delay: 0ms; }
+      .button-motion_surface::after { transition-delay: 40ms; }
+      .button-motion_label { transform: translate(-5%, calc(-100% - 1em)) rotate(-3deg); }
+      .button-motion_copy { transform: none; transition-delay: 50ms; }
+    }
+    @media (hover: hover) and (pointer: fine) {
+      :where(button, a):hover:not(:disabled, [aria-disabled="true"]) > .button-motion_wrap {
+        .button-motion_surface::before,
+        .button-motion_surface::after { transform: translateY(0) rotate(0); }
+        .button-motion_surface::before { transition-delay: 0ms; }
+        .button-motion_surface::after { transition-delay: 40ms; }
+        .button-motion_label { transform: translate(-5%, calc(-100% - 1em)) rotate(-3deg); }
+        .button-motion_copy { transform: none; transition-delay: 50ms; }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .button-motion_surface::before,
+      .button-motion_surface::after,
+      .button-motion_label,
+      .button-motion_copy { transition: none; }
+    }
+  }
+</style>

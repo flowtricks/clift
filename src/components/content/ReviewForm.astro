@@ -1,0 +1,108 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Input from "@/components/form/Input.astro";
+import Select from "@/components/form/Select.astro";
+import Textarea from "@/components/form/Textarea.astro";
+import Button from "@/components/Button.astro";
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true, class: className, ...rest } = Astro.props;
+const options = ["Excellent", "Very good", "Good", "Fair", "Poor"].map(
+  (label, i) => ({
+    value: String(5 - i),
+    label: `${5 - i} ${i === 4 ? "star" : "stars"} — ${label}`,
+  }),
+);
+---
+
+{
+  render && (
+    <div class:list={["review-form_wrap", className]} {...rest}>
+      <form class="review-form_fields" aria-label="Leave a review">
+        <Input
+          label="Your name"
+          name="name"
+          placeholder=""
+          autocomplete="name"
+          required
+          maxlength={80}
+        />
+        <Select
+          label="Star rating"
+          name="rating"
+          placeholder="Choose a rating"
+          options={options}
+          required
+        />
+        <Textarea
+          label="Your review"
+          name="review"
+          minLines={5}
+          required
+          maxlength={2000}
+        />
+        <Button type="submit">Send review by text</Button>
+      </form>
+      <p class="review-form_note text-style-small">
+        After you submit, your messaging app will open with the review ready.
+        Press <strong>Send</strong> in your messaging app to deliver it for
+        approval.
+      </p>
+      <p class="review-form_status" role="status" hidden>
+        Your review is ready in your messaging app. It has not been sent yet.
+      </p>
+      <noscript>
+        <p>
+          Text your name, star rating and review to{" "}
+          <a href="sms:+19852101659">(985) 210-1659</a>.
+        </p>
+      </noscript>
+    </div>
+  )
+}
+<script>
+  for (const wrapper of document.querySelectorAll<HTMLElement>(
+    ".review-form_wrap",
+  )) {
+    const form = wrapper.querySelector("form");
+    form?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+      const data = new FormData(form);
+      const name = String(data.get("name") ?? "").trim();
+      const review = String(data.get("review") ?? "").trim();
+      if (!name || !review) return;
+      const body = `Review for Clift's Home & Air Services\nName: ${name}\nRating: ${data.get("rating")}/5 stars\nReview: ${review}`;
+      window.location.href = `sms:+19852101659?body=${encodeURIComponent(body)}`;
+      const status = wrapper.querySelector<HTMLElement>(".review-form_status");
+      if (status) status.hidden = false;
+    });
+  }
+</script>
+<style is:global>
+  @layer components {
+    .review-form_wrap {
+      width: 100%;
+      margin-top: var(--space-5);
+      .review-form_fields {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: start;
+      }
+      .review-form_note {
+        margin-top: var(--space-4);
+        color: var(--text-2);
+      }
+      .review-form_status[hidden] {
+        display: none;
+      }
+      .review-form_status {
+        margin-top: var(--space-4);
+        color: var(--accent-500);
+      }
+    }
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+import type { HTMLAttributes } from "astro/types";
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && (
+    <div
+      class:list={["hero-backdrop_wrap", className]}
+      {...rest}
+      aria-hidden="true"
+    />
+  )
+}
+<style is:global>
+  @layer components {
+    .hero-backdrop_wrap {
+      overflow: hidden;
+      background: var(--background);
+    }
+  }
+</style>

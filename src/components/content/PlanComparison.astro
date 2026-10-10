@@ -1,0 +1,100 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Monthly Basic price in dollars. */
+  basicPrice: number;
+  /** Monthly Pro price in dollars. */
+  proPrice: number;
+  /** Services and coverage for each plan. */
+  items: { title: string; detail?: string; basic: string; pro: string }[];
+}
+const { render = true, basicPrice, proPrice, items } = Astro.props;
+---
+
+{render && items?.length > 0 && (
+  <div class="plan-comparison_wrap">
+    <table>
+      <caption class="sr-only">Monthly maintenance plan comparison</caption>
+      <colgroup><col class="plan-comparison_service" /><col /><col /></colgroup>
+      <thead>
+        <tr>
+          <td><span class="plan-comparison_label">What’s included</span></td>
+          <th scope="col" data-plan="basic">
+            <h2>Basic PM</h2>
+            <strong class="plan-comparison_price" data-plan-price>${basicPrice}</strong>
+            <span class="plan-comparison_period">/ month</span>
+          </th>
+          <th scope="col" data-plan="pro">
+            <h2>Pro PM</h2>
+            <strong class="plan-comparison_price" data-plan-price>${proPrice}</strong>
+            <span class="plan-comparison_period">/ month</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr>
+            <th scope="row">
+              <span class="plan-comparison_title">{item.title}</span>
+              {item.detail && <span class="plan-comparison_detail">{item.detail}</span>}
+            </th>
+            {[item.basic, item.pro].map((value) => (
+              <td>
+                {value === "included" ? <span class="plan-comparison_check" role="img" aria-label="Included">✓</span>
+                  : value === "excluded" ? <span class="plan-comparison_dash" role="img" aria-label="Not included">—</span>
+                  : <strong class="plan-comparison_credit">{value}</strong>}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+<style is:global>
+  @layer components {
+    .plan-comparison_wrap {
+      width: 100%;
+      border: var(--border-width) solid var(--border);
+      table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+      .plan-comparison_service { width: 50%; }
+      th, td { padding: var(--space-4) var(--space-5); vertical-align: middle; }
+      thead th, thead td { padding-block: var(--space-5); }
+      thead th { text-align: center; font-weight: var(--primary-medium); }
+      thead td { vertical-align: bottom; }
+      thead h2 { font-size: var(--text-main); line-height: 1.3; margin-bottom: var(--space-3); }
+      tr > :nth-child(3) { background: var(--background-2); }
+      thead th:last-child { box-shadow: inset 0 0.1875rem var(--accent-500); }
+      tbody tr { border-top: var(--border-width) solid var(--border); }
+      tbody th { text-align: left; font-weight: var(--primary-medium); }
+      tbody td { text-align: center; }
+      .plan-comparison_label, .plan-comparison_period, .plan-comparison_detail {
+        font-size: var(--text-small);
+        font-weight: var(--primary-regular);
+        line-height: 1.5;
+        color: var(--text-2);
+      }
+      .plan-comparison_price {
+        display: block;
+        font-size: clamp(1.75rem, 3vw, 3rem);
+        font-weight: var(--primary-bold);
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+        color: var(--accent-500);
+        transform-origin: center;
+      }
+      .plan-comparison_period { display: block; margin-top: var(--space-1); }
+      .plan-comparison_title { font-size: var(--text-main); line-height: 1.5; }
+      .plan-comparison_detail { display: block; margin-top: var(--space-1); }
+      .plan-comparison_check { color: var(--accent-500); font-size: 1.25rem; }
+      .plan-comparison_dash { color: var(--text-2); }
+      .plan-comparison_credit { color: var(--accent-500); font-size: var(--text-main); }
+      @media (width < 48rem) {
+        th, td { padding: var(--space-3) var(--space-2); }
+        thead h2, .plan-comparison_title { font-size: var(--text-small); }
+      }
+    }
+  }
+</style>

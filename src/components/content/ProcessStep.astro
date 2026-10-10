@@ -1,0 +1,91 @@
+---
+import type { HTMLAttributes } from "astro/types";
+interface Props extends HTMLAttributes<"article"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Step number. */
+  number: number;
+  /** Card title. Supports inline markup. */
+  heading: string;
+  /** Body text. Supports inline markup. */
+  text: string;
+  /** Step layout. */
+  variant?: "default" | "compact";
+}
+const {
+  render = true,
+  number,
+  heading,
+  text,
+  variant = "default",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && heading && (
+    <article class:list={["process-step_wrap", variant !== "default" && variant, className]} {...rest}>
+      <strong class="process-step_number text-style-small">
+        {String(number).padStart(2, "0")} <span aria-hidden="true">/</span>
+      </strong>
+      <h3 class="text-style-h4">{heading}</h3>
+      <p class="text-style-small">{text}</p>
+    </article>
+  )
+}
+<style is:global>
+  @layer components {
+    .process-step_wrap {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      align-content: start;
+      gap: var(--space-5);
+      min-width: 0;
+      border-block: var(--border-width) solid var(--border);
+      padding: var(--space-5) 0;
+      & + .process-step_wrap { border-top: 0; }
+      .process-step_number {
+        display: flex;
+        gap: var(--space-2);
+        color: var(--accent-500);
+      }
+      h3 { max-width: 18ch; }
+      p {
+        color: var(--text-2);
+        max-width: 36ch;
+      }
+      &.compact {
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        column-gap: var(--space-4);
+        row-gap: var(--space-3);
+        min-height: 0;
+        border: 0;
+        padding: 0;
+        .process-step_number {
+          grid-row: 1 / 3;
+          color: var(--eyebrow-text);
+          align-self: start;
+          padding-top: 0.3em;
+          span { display: none; }
+        }
+        h3 {
+          max-width: none;
+          font-size: var(--text-large);
+          line-height: 1.4;
+          letter-spacing: normal;
+        }
+      }
+      @media (width >= 48rem) {
+        min-height: 20rem;
+        gap: var(--space-6);
+        padding-inline: var(--space-5);
+        &:not(.compact) + .process-step_wrap:not(.compact) {
+          border-top: var(--border-width) solid var(--border);
+          border-left: var(--border-width) solid var(--border);
+        }
+      }
+    }
+  }
+</style>

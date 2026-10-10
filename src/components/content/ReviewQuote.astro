@@ -1,0 +1,57 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { slotContent } from "@/utils/slots.ts";
+
+interface Props extends HTMLAttributes<"figure"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Reviewer's name. */
+  author: string;
+}
+const { render = true, author, class: className, ...rest } = Astro.props;
+const content = await slotContent(Astro.slots);
+---
+
+{render && author && content && (
+  <figure class:list={["review-quote_wrap", className]} {...rest}>
+    <p class="review-quote_rating" aria-label="5 out of 5 stars">
+      {Array.from({ length: 5 }, () => <span class="review-quote_star" data-line-star aria-hidden="true">★</span>)}
+    </p>
+    <blockquote class="review-quote_text" data-split-lines><Fragment set:html={content} /></blockquote>
+    <figcaption class="review-quote_author" data-line-meta>{author}</figcaption>
+  </figure>
+)}
+
+<style is:global>
+  @layer components {
+    .review-quote_wrap {
+      display: flex;
+      flex-direction: column;
+      justify-content: start;
+      margin: 0;
+      width: 100%;
+      min-width: 0;
+      .review-quote_rating {
+        margin: 0 0 var(--space-3);
+        color: var(--accent-500);
+        letter-spacing: 0.1em;
+      }
+      .review-quote_star {
+        display: inline-block;
+        transform-origin: center;
+      }
+      .review-quote_text {
+        margin: 0;
+        color: var(--text-2);
+        font-size: var(--text-main);
+        line-height: 1.6;
+        max-width: 54ch;
+      }
+      .review-quote_author {
+        margin-top: var(--space-3);
+        font-size: var(--text-small);
+        font-weight: var(--primary-medium);
+      }
+    }
+  }
+</style>

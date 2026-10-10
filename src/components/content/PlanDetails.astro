@@ -1,0 +1,126 @@
+---
+import type { HTMLAttributes } from "astro/types";
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Plan name. */
+  title: string;
+  /** System size shown above the plan name. */
+  systemSize?: string;
+  /** Short plan description. */
+  description: string;
+  /** Monthly price in dollars. */
+  price: number;
+  /** Included services. */
+  features: string[];
+  /** Plan emphasis. */
+  variant?: "default" | "featured";
+}
+const { render = true, title, systemSize, description, price, features, variant = "default", class: className, ...rest } = Astro.props;
+---
+
+{
+  render && Number.isFinite(price) && features?.length > 0 && (
+    <div class:list={["plan-details_wrap", variant === "featured" ? "featured theme-brand" : "theme-light", className]} {...rest}>
+      <div class="plan-details_header">
+        <div class="plan-details_intro">
+          {systemSize && <p class="plan-details_eyebrow" data-plan-size>{systemSize}</p>}
+          <h3 class="plan-details_title text-style-h3">{title}</h3>
+          <p class="plan-details_description">{description}</p>
+        </div>
+      <p class="plan-details_price">
+        <strong data-plan-price>${price}</strong>
+        <span>/ month</span>
+      </p>
+      </div>
+      <p class="plan-details_schedule">Semi-Annual Service (Every 6 Months)</p>
+      <ul>
+        {features.map((feature) => (
+          <li>
+            <span aria-hidden="true">✓</span>
+            {feature}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+<style is:global>
+  @layer components {
+    .plan-details_wrap {
+      width: 100%;
+      min-width: 0;
+      padding: var(--space-6);
+      background: linear-gradient(180deg, var(--blue-500), var(--light-300));
+      &.featured { background: var(--accent-500); }
+      .plan-details_header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-5);
+      }
+      .plan-details_intro { display: grid; gap: var(--space-3); }
+      .plan-details_title { margin: 0; }
+      .plan-details_eyebrow {
+        font-size: var(--text-small);
+        font-weight: var(--primary-medium);
+        line-height: 1.4;
+        letter-spacing: 0.025em;
+        text-transform: uppercase;
+        color: var(--text-2);
+      }
+      .plan-details_schedule {
+        margin-top: var(--space-4);
+        font-size: var(--text-small);
+        font-weight: var(--primary-medium);
+        line-height: 1.5;
+      }
+      .plan-details_description {
+        font-size: var(--text-small);
+        line-height: 1.5;
+        color: var(--text-2);
+      }
+      .plan-details_price {
+        display: flex;
+        flex-shrink: 0;
+        align-items: baseline;
+        gap: var(--space-2);
+        line-height: 1;
+        strong {
+          font: var(--primary-bold) var(--h2)/1 var(--h2-font-family);
+          font-variant-numeric: tabular-nums;
+          transform-origin: left center;
+          color: var(--text);
+        }
+        span {
+          font-size: var(--text-small);
+          color: var(--text-2);
+        }
+      }
+      ul {
+        margin-top: var(--space-6);
+        padding-top: var(--space-5);
+        border-top: var(--border-width) solid var(--border);
+        display: grid;
+        gap: var(--space-3);
+      }
+      li {
+        display: flex;
+        gap: var(--space-2);
+        align-items: baseline;
+        font-size: var(--text-main);
+        line-height: 1.6;
+      }
+      li > span {
+        color: var(--text);
+      }
+      @media (width < 48rem) {
+        li {
+          font-size: var(--text-small);
+          line-height: 1.5;
+        }
+      }
+    }
+  }
+</style>

@@ -1,0 +1,185 @@
+---
+import { SITE_NAME } from "@/consts.ts";
+import LogoIcon from "@/assets/graphics/clifts-logo.svg";
+import ArrowIcon from "@/assets/icons/arrow-full.svg";
+import Button from "@/components/Button.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import ProcessStep from "@/components/content/ProcessStep.astro";
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <footer class="footer_wrap theme-dark">
+      <div class="footer_inner">
+        <div class="footer_contact">
+          <div class="footer_intro">
+            <h2 class="text-style-h1">Ready to get your home comfortable again?</h2>
+          </div>
+          <div class="footer_phone">
+            <p>
+              Call or <a href="sms:+19852101659">text</a> to talk through your home's heating and cooling needs.
+            </p>
+            <Button element="link" href="tel:+19852101659">(985) 210-1659</Button>
+          </div>
+        </div>
+        <div class="footer_process" id="process">
+          <h2 class="footer_label">A simple path back to comfort.</h2>
+          <Grid medium={3} class="gap-6">
+            <ProcessStep variant="compact" number={1} heading="Call and describe the issue" text="Tell us what the system is doing, where you are and the best way to reach you." />
+            <ProcessStep variant="compact" number={2} heading="Get a clear diagnosis" text="We inspect the equipment, narrow down the cause and walk you through the options." />
+            <ProcessStep variant="compact" number={3} heading="Choose the right next step" text="Move forward with the repair or plan the replacement that fits your home." />
+          </Grid>
+        </div>
+        <div class="footer_details">
+          <a class="footer_brand" href="/" aria-label={`${SITE_NAME} home`}>
+            <LogoIcon class="footer_logo" aria-hidden="true" focusable="false" />
+            <strong>Clift’s</strong>
+            <span>Home &amp; Air<br />Services LLC</span>
+          </a>
+          <div class="footer_meta">
+            <span>LaPlace, Louisiana · Residential HVAC · © {new Date().getFullYear()}</span>
+            <a class="footer_social" href="https://www.facebook.com/profile.php?id=61594855631270" target="_blank" rel="noopener noreferrer" aria-label="Facebook (opens in a new tab)">
+              <span>Facebook</span>
+              <ArrowIcon class="footer_social-icon" aria-hidden="true" focusable="false" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
+<style is:global>
+  @layer components {
+    .footer_wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100svh - var(--nav-height));
+      padding: calc(var(--space-8) * 1.5) var(--site-margin) var(--space-6);
+      .footer_inner {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        flex: 1;
+        width: 100%;
+        gap: calc(var(--space-8) * 1.25);
+        max-width: var(--max-width-main);
+        margin-inline: auto;
+      }
+      .footer_contact {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        align-items: end;
+        gap: var(--space-7);
+      }
+      .footer_intro h2 {
+        max-width: 20ch;
+        text-wrap: balance;
+      }
+      .footer_phone p {
+        max-width: 34ch;
+        color: var(--text-2);
+        line-height: 1.6;
+      }
+      .footer_phone p a {
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+      }
+      .footer_phone {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: var(--space-5);
+        justify-self: end;
+        padding-bottom: var(--space-1);
+      }
+      .footer_process {
+        padding-top: var(--space-6);
+        border-top: var(--border-width) solid var(--border);
+      }
+      .footer_label {
+        margin-bottom: var(--space-6);
+        color: var(--eyebrow-text);
+        font-size: var(--text-main);
+        font-weight: var(--primary-medium);
+      }
+      .footer_details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-5);
+        padding-top: var(--space-6);
+        border-top: var(--border-width) solid var(--border);
+        font-size: var(--text-small);
+        color: var(--text-2);
+      }
+      .footer_meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: end;
+        align-items: center;
+        gap: var(--space-2) var(--space-5);
+      }
+      .footer_social {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        color: var(--text);
+        white-space: nowrap;
+        transition: color var(--hover-duration) var(--hover-ease);
+        &:hover,
+        &:focus-visible {
+          color: var(--accent-500);
+        }
+      }
+      .footer_social-icon {
+        width: 1em;
+        height: 1em;
+        transform: rotate(-45deg);
+      }
+      .footer_brand {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        gap: var(--space-3);
+        color: var(--text);
+        strong {
+          font-size: 2.25rem;
+          line-height: 1;
+          font-weight: var(--primary-bold);
+          letter-spacing: -0.08em;
+        }
+        > span {
+          font-size: 0.875rem;
+          line-height: 1.15;
+        }
+      }
+      .footer_logo {
+        width: auto;
+        height: 2.75rem;
+        flex-shrink: 0;
+        margin-right: calc(var(--space-1) - var(--space-3));
+      }
+      @media (width < 48rem) {
+        .footer_contact {
+          grid-template-columns: 1fr;
+          gap: var(--space-5);
+        }
+        .footer_phone {
+          justify-self: start;
+        }
+        .footer_details {
+          flex-direction: column;
+          align-items: start;
+        }
+        .footer_meta {
+          justify-content: start;
+        }
+      }
+    }
+  }
+</style>

@@ -1,0 +1,416 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import ButtonWrapper from "@/components/wrapper/ButtonWrapper.astro";
+import Img from "@/components/media/Img.astro";
+import Overlay from "@/components/media/Overlay.astro";
+import { slotContent } from "@/utils/slots.ts";
+
+type ImageSource = ImageMetadata | string;
+
+type Base = HTMLAttributes<"div"> & {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Eyebrow text. Supports inline markup. */
+  eyebrow?: string;
+  /** Card title. Supports inline markup. */
+  heading?: string;
+  /** Heading level. */
+  headingTag?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  /** Body text. Supports inline markup. */
+  text?: string;
+  /** Button label. Omit to hide the button. */
+  buttonLabel?: string;
+  /** Button destination. Omit for a `<button>`. */
+  buttonHref?: string;
+  /** Card layout. */
+  variant?: "default" | "cover" | "stacked" | "service" | "contribution";
+  /** Color theme of element and its children. */
+  theme?: "inherit" | "light" | "dark" | "brand" | "invert";
+};
+
+type Props = Base &
+  (
+    | {
+        variant?: "default" | "contribution";
+        image?: never;
+        imageAlt?: never;
+      }
+    | {
+        variant: "cover" | "service";
+        /** Image source. */
+        image?: ImageSource;
+        /** Image alt text. Omit for decorative images. */
+        imageAlt?: string;
+      }
+    | {
+        variant: "stacked";
+        /** Color theme of element and its children. */
+        theme?: never;
+        /** Image source. */
+        image?: ImageSource;
+        /** Image alt text. Omit for decorative images. */
+        imageAlt?: string;
+      }
+  );
+
+type AllProps = Base & {
+  image?: ImageSource;
+  imageAlt?: string;
+};
+
+const {
+  render = true,
+  eyebrow,
+  heading,
+  headingTag = "h3",
+  text,
+  buttonLabel,
+  buttonHref,
+  variant = "default",
+  theme = "inherit",
+  image,
+  imageAlt,
+  class: className,
+  ...rest
+} = Astro.props as AllProps;
+
+const content = variant === "contribution" ? await slotContent(Astro.slots) : "";
+const hasImage = variant !== "default" && variant !== "contribution" && !!image;
+const hasContent = !!(eyebrow || heading || text || buttonLabel || content);
+const hasTheme = variant !== "stacked" && theme !== "inherit";
+
+/* The button each variant closes with, so a set of cards reads as one system.
+   A link carries no emphasis of its own, so the two are picked together. */
+const buttonKind =
+  variant === "stacked"
+    ? ({ variant: "link" } as const)
+    : ({ emphasis: variant === "cover" ? "primary" : "secondary" } as const);
+
+if (import.meta.env.DEV && render) {
+  if (variant === "stacked" && theme !== "inherit") {
+    console.warn(
+      '[lumos] <Card variant="stacked"> has no surface to color, so `theme` was dropped. It keeps the theme around it.',
+    );
+  }
+  if (variant === "default" && image) {
+    console.warn(
+      '[lumos] <Card variant="default"> holds no image, so `image` was dropped. Use the cover or stacked variant to show it.',
+    );
+  }
+  if (variant !== "default" && variant !== "contribution" && !image) {
+    console.warn(
+      `[lumos] <Card variant="${variant}"> has no \`image\`, so it renders as a plain card.`,
+    );
+  }
+}
+---
+
+{
+  render && (hasContent || hasImage) && (
+    <div
+      class:list={[
+        "card_wrap",
+        variant !== "default" && variant,
+        hasTheme && `theme-${theme}`,
+        className,
+      ]}
+      {...rest}
+    >
+      {hasImage && variant !== "service" && (
+        <div class="card_visual">
+          <Img src={image!} alt={imageAlt} />
+          {variant === "cover" && <Overlay variant="gradient" />}
+        </div>
+      )}
+      {variant === "contribution" ? (
+        <div class="card_contribution">
+          <span class="card_choice text-style-small">{eyebrow}</span>
+          <div class="card_contribution-content">
+            <h3 class="card_contribution-title text-style-h3">{heading}</h3>
+            <p class="card_contribution-description">{text}</p>
+            <Fragment set:html={content} />
+          </div>
+        </div>
+      ) : variant === "service" ? (
+        <div class="card_service">
+          <span class="card_label">{eyebrow}</span>
+          {hasImage && (
+            <div class="card_visual">
+              <div class="card_image-frame">
+                <div class="card_image-motion">
+                  <Img src={image!} alt={imageAlt} class="width-full height-full" />
+                </div>
+              </div>
+            </div>
+          )}
+          <div class="card_content">
+            <h3 class="card_title text-style-h3">{heading}</h3>
+            <p class="card_description">{text}</p>
+          </div>
+        </div>
+      ) : (
+        hasContent && (
+          <div class="card_content margin-trim">
+            <Eyebrow>
+              <Fragment set:html={eyebrow} />
+            </Eyebrow>
+            <Heading tag={headingTag} variant="h5">
+              <Fragment set:html={heading} />
+            </Heading>
+            <Paragraph>
+              <Fragment set:html={text} />
+            </Paragraph>
+            <ButtonWrapper>
+              {buttonHref ? (
+                <Button element="link" href={buttonHref} {...buttonKind}>
+                  {buttonLabel}
+                </Button>
+              ) : (
+                <Button {...buttonKind}>{buttonLabel}</Button>
+              )}
+            </ButtonWrapper>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+<script>
+  function initServiceParallax() {
+    const frames = [...document.querySelectorAll<HTMLElement>(".card_image-frame")];
+    if (!frames.length || frames[0].dataset.parallaxReady) return;
+    const items = frames.map((frame) => {
+      frame.dataset.parallaxReady = "true";
+      return { frame, image: frame.querySelector<HTMLElement>(".card_image-motion")! };
+    });
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const events = new AbortController();
+    let pending = 0;
+    const update = () => {
+      pending = 0;
+      const viewport = window.innerHeight;
+      for (const { frame, image } of items) {
+        const bounds = frame.getBoundingClientRect();
+        const progress = Math.max(-1, Math.min(1, (viewport - bounds.top * 2 - bounds.height) / (viewport + bounds.height)));
+        image.style.setProperty("--_image-shift", reduced.matches ? "0%" : `${progress * 10}%`);
+        image.style.setProperty("--_image-scale", reduced.matches ? "1" : "1.22");
+      }
+    };
+    const schedule = () => { if (!pending) pending = requestAnimationFrame(update); };
+    window.addEventListener("scroll", schedule, { passive: true, signal: events.signal });
+    window.addEventListener("resize", schedule, { passive: true, signal: events.signal });
+    reduced.addEventListener("change", schedule, { signal: events.signal });
+    const resize = new ResizeObserver(schedule);
+    frames.forEach((frame) => resize.observe(frame));
+    update();
+    document.addEventListener("astro:before-swap", () => {
+      events.abort();
+      resize.disconnect();
+      cancelAnimationFrame(pending);
+      frames.forEach((frame) => delete frame.dataset.parallaxReady);
+    }, { once: true });
+  }
+  initServiceParallax();
+  document.addEventListener("astro:page-load", initServiceParallax);
+</script>
+
+<style is:global>
+  @layer components {
+    .card_wrap {
+      --_padding: var(--space-6);
+      --_min-height: 20rem;
+      --_visual-ratio: 3 / 2;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--_padding);
+      position: relative;
+      background-color: var(--background-2);
+      border-radius: var(--radius-main);
+      overflow: clip;
+
+      &.service {
+        display: block;
+        .card_service {
+          display: grid;
+          grid-template-columns: 0.2fr 0.3fr 0.5fr;
+        }
+        background: transparent;
+        gap: 0;
+        border-top: var(--border-width) solid var(--border);
+        overflow: visible;
+        .card_label {
+          padding: var(--space-5) var(--space-3) var(--space-5) 0;
+          font-size: var(--text-small);
+          font-weight: var(--primary-medium);
+        }
+        .card_visual {
+          height: 20rem;
+          padding: var(--space-4);
+          border-left: var(--border-width) solid var(--border);
+          border-right: var(--border-width) solid var(--border);
+        }
+        .card_image-frame {
+          width: 100%;
+          height: 100%;
+          overflow: clip;
+        }
+        .card_image-motion {
+          width: 100%;
+          height: 100%;
+          transform: translateY(var(--_image-shift, 0%)) scale(var(--_image-scale, 1));
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .card_image-motion { transform: none; }
+        }
+        .card_content {
+          padding: var(--space-5);
+          justify-content: start;
+        }
+        .card_title {
+          max-width: 19ch;
+        }
+        .card_description {
+          color: var(--text-2);
+          margin-top: var(--space-5);
+          max-width: 52ch;
+        }
+        @media (width < 48rem) {
+          .card_service {
+            grid-template-columns: 1fr;
+          }
+          .card_label {
+            padding-block: var(--space-4);
+          }
+          .card_visual {
+            border: 0;
+            padding: 0;
+            height: 16rem;
+          }
+          .card_content {
+            padding: var(--space-5) 0;
+          }
+        }
+      }
+      &.cover {
+        min-height: var(--_min-height);
+      }
+      &.contribution {
+        display: block;
+        background: transparent;
+        border-radius: 0;
+        overflow: visible;
+        padding-block: var(--space-6);
+        & + .contribution { border-top: var(--border-width) solid var(--border); }
+        &:first-child { padding-top: 0; }
+        &:last-child { padding-bottom: 0; }
+        .card_contribution {
+          display: grid;
+          gap: var(--space-4);
+        }
+        .card_choice {
+          color: var(--accent-500);
+          font-weight: var(--primary-medium);
+          letter-spacing: 0.04em;
+        }
+        .card_contribution-title { max-width: 20ch; }
+        .card_contribution-description {
+          margin-top: var(--space-4);
+          max-width: 52ch;
+          color: var(--text-2);
+        }
+      }
+      &.stacked {
+        background-color: transparent;
+        overflow: visible;
+      }
+    }
+
+    .card_visual {
+      position: relative;
+      width: 100%;
+      flex: none;
+      border-radius: inherit;
+      overflow: clip;
+
+      .stacked > & {
+        aspect-ratio: var(--_visual-ratio);
+      }
+
+      .cover > & {
+        position: absolute;
+        inset: 0;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      > :is(.image, .video) {
+        width: 100%;
+        height: 100%;
+      }
+    }
+
+    /* Media fills its box, be that the whole card or the band across its top.
+       The component layer puts this above the `height: auto` every image and
+       video starts from. */
+    .card_visual > :is(.image, .video) {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Buttons closing a card sit on its floor, however tall the row around it
+       grows. This outranks the margin `.button-wrapper` sets for itself. */
+    .card_content > .button-wrapper:last-child {
+      margin-top: auto;
+      padding-top: var(--space-6);
+    }
+
+    .card_content {
+      display: flex;
+      flex-direction: column;
+      align-items: var(--_alignment, start);
+      text-align: var(--_alignment, start);
+      flex-grow: 1;
+      width: 100%;
+      max-width: 100%;
+      padding: var(--_padding);
+
+      .cover > & {
+        z-index: 1;
+      }
+
+      .stacked > & {
+        padding-inline: 0;
+        padding-top: 0;
+      }
+    }
+
+    .card_wrap:has(.button_wrap) {
+      .button_wrap::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+      }
+
+      .card_content a:not(.button_wrap) {
+        position: relative;
+        z-index: 1;
+      }
+
+      .image {
+        transition: scale calc(var(--hover-duration) * 2) var(--hover-ease);
+      }
+
+      @media (hover: hover) {
+        &:hover .image {
+          scale: 1.04;
+        }
+      }
+    }
+  }
+</style>

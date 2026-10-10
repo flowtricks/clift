@@ -1,0 +1,224 @@
+---
+import repairImage from "@/assets/images/real-repair.jpg";
+import maintenanceImage from "@/assets/images/real-maintenance.jpg";
+import condenserImage from "@/assets/images/condenser-delivery-private.jpg";
+import coilImage from "@/assets/images/real-coil-detail.jpg";
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import Slider from "@/components/interactive/Slider.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Button from "@/components/Button.astro";
+import ButtonWrapper from "@/components/wrapper/ButtonWrapper.astro";
+import Img from "@/components/media/Img.astro";
+import Card from "@/components/item/Card.astro";
+import HeroScroll from "@/components/section/HeroScroll.astro";
+import HeroMain from "@/components/content/HeroMain.astro";
+import ResidentialHvac from "@/components/content/ResidentialHvac.astro";
+import TrustMain from "@/components/content/TrustMain.astro";
+import FilterOffer from "@/components/content/FilterOffer.astro";
+import ReviewQuote from "@/components/content/ReviewQuote.astro";
+import PlanDetails from "@/components/content/PlanDetails.astro";
+import PlanSizeToggle from "@/components/content/PlanSizeToggle.astro";
+import Accordion from "@/components/interactive/Accordion.astro";
+import AccordionItem from "@/components/interactive/AccordionItem.astro";
+const groups = [
+  { size: "1 TO 5 TONS", basic: 30, pro: 50 },
+  { size: "5 TONS & UP", basic: 50, pro: 75 },
+];
+---
+
+<Layout theme="dark">
+  <!-- Hero -->
+  <HeroScroll id="home">
+    <HeroMain>
+      <ResidentialHvac slot="visual" />
+      <Fragment slot="lead">
+      <Eyebrow>LaPlace, Louisiana / Residential HVAC</Eyebrow>
+      <Heading tag="h1" variant="display" maxWidth={20}
+        >Your comfort.<br />Handled.</Heading
+      >
+      </Fragment>
+      <Paragraph variant="large" maxWidth={53} class="color-text-2"
+        >Practical repairs, preventive maintenance and honest system guidance
+        for homeowners in LaPlace and nearby communities.</Paragraph
+      >
+      <ButtonWrapper
+        ><Button element="link" href="tel:+19852101659"
+          >(985) 210-1659</Button
+        ><Button element="link" href="#services" emphasis="secondary"
+          >Explore services</Button
+        ></ButtonWrapper
+      >
+      <TrustMain
+        slot="credentials"
+        class="margin-top-0"
+        items={[{ title: "EPA 608 certified" }, { title: "Insured" }, { title: "Residential service" }]}
+      />
+    </HeroMain>
+  </HeroScroll>
+  <!-- Services -->
+  <Section variant="sky" theme="light" id="services" gap="0">
+    <ContentWrapper variant="intro" class="padding-bottom-8">
+      <Eyebrow>How we can help</Eyebrow>
+      <Heading maxWidth={19}>Comfort for the Louisiana heat.</Heading>
+      <Paragraph slot="column2" maxWidth={55} class="color-text-2"
+        >From a system that suddenly stops cooling to routine upkeep that helps
+        prevent the next breakdown, you get focused service built around what
+        your home actually needs.</Paragraph
+      >
+    </ContentWrapper>
+    <Grid class="gap-0">
+      <Card
+        variant="service"
+        image={repairImage}
+        imageAlt="Damaged air conditioning electrical connection during diagnosis"
+        eyebrow="01 / REPAIR"
+        heading="Air conditioning repair"
+        text="Troubleshooting and repair for cooling problems, strange noises and systems that are not running right."
+      />
+      <Card
+        variant="service"
+        image={maintenanceImage}
+        imageAlt="Outdoor air conditioning coil being washed during maintenance"
+        eyebrow="02 / MAINTENANCE"
+        heading="Preventive maintenance"
+        text="Seasonal checks and coil washing help your system run cleaner, cooler and use less power."
+      />
+      <Card
+        variant="service"
+        image={condenserImage}
+        imageAlt="New outdoor air conditioning condenser ready for a residential changeout"
+        eyebrow="03 / REPLACEMENT"
+        heading="Condenser changeouts"
+        text="Clear guidance when a repair is no longer the sensible answer, with careful removal and replacement work."
+      />
+    </Grid>
+    <FilterOffer />
+  </Section>
+  <!-- Approach -->
+  <Section
+    theme="dark"
+    paddingTop="none"
+    paddingBottom="none"
+    containerClass="width-full max-width-full"
+    id="approach"
+  >
+    <ContentWrapper variant="divided">
+      <Eyebrow>The Clift's approach</Eyebrow>
+      <Heading maxWidth={20}>Good work starts with a straight answer.</Heading>
+      <ContentWrapper class="margin-top-auto padding-top-6" id="reviews">
+        <Slider label="Customer reviews" variant="contained" transition="lines" loop pagination={false} xsmall={1} class="gap-4">
+          <ReviewQuote author="A. O.">
+            I'm needing my power bill to go down, so this company came and
+            cleaned my outside coils that were super dirty. Great service!
+          </ReviewQuote>
+          <ReviewQuote author="Nicole R.">
+            Highly recommend! Devin was professional, knowledgeable, honest, and
+            dependable. He quickly diagnosed the issue and had everything working
+            again in no time. Great communication and excellent service from start
+            to finish. It's refreshing to find a company that takes pride in their
+            work and cares about excellence!
+          </ReviewQuote>
+          <Button slot="controls" class="align-self-end" element="link" variant="link" href="https://www.google.com/maps/place/Clift's+Home+%26+Air+Services+LLC/@30.1277416,-90.6894962,60754m/data=!3m1!1e3!4m8!3m7!1s0x2d489373197a5e65:0xa734f692c0f61e49!8m2!3d30.127845!4d-90.524345!9m1!1b1!16s%2Fg%2F11zz4zfmxc?entry=ttu&amp;g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Leave a review</Button>
+        </Slider>
+      </ContentWrapper>
+      <Accordion slot="column2" openFirst>
+        <AccordionItem heading="Diagnose first" variant="feature">
+          <Grid small={2}>
+            <Paragraph variant="small" class="color-text-2">Start with the problem in front of us, then explain what we find before moving ahead.</Paragraph>
+            <Img src={coilImage} alt="Close-up of an air conditioning coil before cleaning" width={320} height={280} />
+          </Grid>
+        </AccordionItem>
+        <AccordionItem heading="Respect your home" variant="feature">
+          <Paragraph variant="small" maxWidth={46} class="color-text-2">Work carefully, keep the job area orderly and treat your equipment like it matters.</Paragraph>
+        </AccordionItem>
+        <AccordionItem heading="Recommend what makes sense" variant="feature">
+          <Paragraph variant="small" maxWidth={46} class="color-text-2">Repair when a repair is reasonable. Talk replacement when the numbers point that way.</Paragraph>
+        </AccordionItem>
+      </Accordion>
+    </ContentWrapper>
+  </Section>
+  <!-- Maintenance plans -->
+  <Section theme="dark" id="plans" gap="4">
+    <ContentWrapper variant="columns" column2Class="align-self-end">
+      <Eyebrow>Residential preventative maintenance</Eyebrow>
+      <Heading tag="h2" variant="h2" maxWidth={23}>Protect your system &amp; save on utility costs</Heading>
+      <Paragraph slot="column2" maxWidth={34} class="color-text-2">Monthly preventative maintenance plans to help your system perform at its best, all year long.</Paragraph>
+    </ContentWrapper>
+      <PlanSizeToggle items={groups}>
+        <Slider label="Maintenance plans" xsmall={1.08} medium={2} class="gap-2">
+          <PlanDetails
+            title="Basic PM"
+            systemSize={groups[0].size}
+            description="Essential seasonal upkeep."
+            price={groups[0].basic}
+            data-plan="basic"
+            features={["Wash coils & check unit operation", "Blow out and vacuum drain lines", "Add pan tabs"]}
+          />
+          <PlanDetails
+            title="Pro PM"
+            systemSize={groups[0].size}
+            description="Deeper cleaning and added protection."
+            price={groups[0].pro}
+            data-plan="pro"
+            variant="featured"
+            features={["Everything in Basic, plus:", "Deep chemical wash", "Pull and clean blower wheel (if needed)", "Wipe down inside cabinet with mold killer & preventative (spray & wipe)", "Full electrical check & swap out bad parts", "Includes $100 annual parts/filter credit"]}
+          />
+        </Slider>
+      </PlanSizeToggle>
+    <Paragraph variant="small" maxWidth={100} class="color-text-2"
+        >All annual parts/filter credits expire at the end of the calendar year.
+        Services cover filters, belts, and related maintenance items. Serving
+        Residential Clients Only.</Paragraph
+      >
+  </Section>
+  <!-- Blessing Fund -->
+  <Section theme="light" variant="sky" inset id="blessing-fund">
+    <ContentWrapper variant="sticky-content">
+      <Eyebrow>Neighbors helping neighbors</Eyebrow>
+      <Heading tag="h2" variant="h1" maxWidth={12}>The Blessing Fund</Heading>
+      <Paragraph maxWidth={42}>
+        If Clift's has helped your family—or you simply believe in local people
+        taking care of one another—you can choose where your contribution makes
+        a difference.
+      </Paragraph>
+      <Eyebrow variant="tag" class="margin-top-6">Payment link coming soon</Eyebrow>
+      <Fragment slot="column2">
+      <ContentWrapper variant="panel" class="theme-light background-1">
+        <Card
+          variant="contribution"
+          eyebrow="CHOICE 01"
+          heading="Support the business"
+          text="Help Clift's keep growing, improving and serving local families. Your support can go toward the tools, supplies and training that strengthen a small hometown business."
+        />
+        <Card
+          variant="contribution"
+          eyebrow="CHOICE 02"
+          heading="Pay it forward"
+          text="Give toward the next person in need—someone facing a hard season who truly needs help covering their bill—so they can receive free or discounted service."
+        >
+          <Accordion>
+            <AccordionItem heading="How the Blessing Fund works" variant="compact" headingTag="h4">
+              <Paragraph variant="small">I charge the same honest price I'd charge any customer — no markups, no
+        special pricing. The person being helped typically pays at least half,
+        and the fund covers the rest directly toward the job. If the customer
+        can show proof they are struggling to pay their regular bills—for
+        example, past-due bills—the fund may cover more than half. So a $3,000
+        replacement would typically cost a neighbor in need $1,500, with the
+        fund covering the rest.</Paragraph>
+            </AccordionItem>
+          </Accordion>
+        </Card>
+      </ContentWrapper>
+      <Paragraph variant="small" class="color-text-2 margin-top-4">
+        Contributions are community support, not tax-deductible donations;
+        Clift's Home &amp; Air Services LLC is a business, not a nonprofit.
+      </Paragraph>
+      </Fragment>
+    </ContentWrapper>
+  </Section>
+</Layout>

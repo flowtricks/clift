@@ -1,0 +1,50 @@
+---
+import heroImage from "@/assets/images/real-work-hero.jpg";
+import logoImage from "@/assets/images/clifts-logo.jpg";
+import { Font } from "astro:assets";
+import { SITE_NAME, SITE_DESCRIPTION } from "@/consts.ts";
+import { isNoindexRoute } from "@/utils/seo.ts";
+import type { SeoProps } from "@/types.ts";
+
+type Props = SeoProps;
+
+const {
+  title,
+  description = SITE_DESCRIPTION,
+  image = heroImage.src,
+  type = "website",
+  noindex,
+} = Astro.props;
+
+const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
+
+const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const socialImage = new URL(image, Astro.site);
+---
+
+<meta charset="utf-8" />
+<style is:inline>
+  @layer base, patterns, components, utilities;
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<Font cssVariable="--font-archivo" preload />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{isNoindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={socialImage} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImage} />
+
+<link rel="icon" type="image/jpeg" href={logoImage.src} />
+<meta name="generator" content={Astro.generator} />

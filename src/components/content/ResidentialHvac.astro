@@ -1,0 +1,122 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true } = Astro.props;
+---
+
+{render && (
+  <figure class="residential-hvac_wrap" aria-label="Illustrated 3D cutaway of a residential HVAC system">
+    <div class="residential-hvac_canvas" data-residential-hvac></div>
+    <figcaption class="sr-only">
+      Hover over an HVAC part to highlight it, then click or tap to repair it. Hover over the coffee-table book to open it and move away to close it, or tap it to toggle it open and closed. Hover over or tap the couch pillow to make it bounce. Touch the plant to move its leaves. Keyboard users can tab to the book or pillow to interact, or press Enter on the repair buttons. Damage is stylized for this interactive illustration.
+      <span class="sr-only">Room air returns through a duct and an installed filter, passes over the indoor cooling coil, and is circulated back through the supply duct by a centrifugal blower. Two refrigerant pipes connect the indoor coil to the outdoor condenser; they do not carry room air. A trapped condensate drain carries water outdoors. Cabinet faces and parts of the house are cut away to reveal the components; the cabinet is closed during normal operation. This is a simplified illustration, not an installation diagram.</span>
+    </figcaption>
+  </figure>
+)}
+
+<script>
+  function initResidentialScenes() {
+    document.querySelectorAll<HTMLElement>("[data-residential-hvac]").forEach((host) => {
+      if (host.dataset.ready) return;
+      host.dataset.ready = "true";
+      let scene: { dispose: () => void } | undefined;
+      let alive = true;
+      let starting = false;
+      let visible = false;
+      let idle: number | undefined;
+      const start = async () => {
+        if (starting || !alive || !visible) return;
+        starting = true;
+        try {
+          const { createResidentialHvac } = await import("@/scripts/residential-hvac");
+          if (alive) scene = createResidentialHvac(host);
+        } catch {
+          host.dataset.unavailable = "true";
+        }
+      };
+      const schedule = () => {
+        if (document.readyState !== "complete" || starting || !visible || !alive) return;
+        if ("requestIdleCallback" in window) idle = window.requestIdleCallback(() => void start(), { timeout: 1800 });
+        else void start();
+      };
+      const observer = new IntersectionObserver(([entry]) => {
+        visible = entry.isIntersecting;
+        if (visible) schedule();
+      }, { threshold: 0.01 });
+      observer.observe(host);
+      window.addEventListener("load", schedule, { once: true });
+      document.addEventListener("astro:before-swap", () => {
+        alive = false;
+        if (idle !== undefined) window.cancelIdleCallback(idle);
+        window.removeEventListener("load", schedule);
+        observer.disconnect();
+        scene?.dispose();
+      }, { once: true });
+    });
+  }
+  initResidentialScenes();
+  document.addEventListener("astro:page-load", initResidentialScenes);
+</script>
+
+<style is:global>
+  @layer components {
+    .residential-hvac_wrap {
+      width: 100%;
+      height: var(--hvac-height, auto);
+      margin: 0;
+      .residential-hvac_canvas {
+        position: relative;
+        width: 100%;
+        height: var(--hvac-height, auto);
+        aspect-ratio: var(--hvac-aspect, 9 / 7);
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        touch-action: pan-y pinch-zoom;
+        opacity: 0;
+      }
+      .residential-hvac_repair {
+        position: absolute;
+        width: 0.0625rem;
+        height: 0.0625rem;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .residential-hvac_repair:focus-visible {
+        bottom: var(--space-3);
+        left: var(--space-3);
+        z-index: 2;
+        width: auto;
+        height: auto;
+        min-height: 2.75rem;
+        padding: var(--space-2) var(--space-3);
+        clip-path: none;
+        background: var(--dark-900);
+        color: var(--light-100);
+        outline: 0.125rem solid var(--accent-500);
+        font-size: 0.875rem;
+      }
+      [data-rendered="true"] canvas {
+        animation: residential-hvac-reveal 1500ms ease-out both;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        [data-rendered="true"] canvas {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    }
+    @keyframes residential-hvac-reveal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  }
+</style>

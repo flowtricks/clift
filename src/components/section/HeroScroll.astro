@@ -1,0 +1,124 @@
+---
+import type { ComponentProps, HTMLAttributes } from "astro/types";
+import Section from "@/components/wrapper/Section.astro";
+import HeroBackdrop from "@/components/content/HeroBackdrop.astro";
+import { slotContent } from "@/utils/slots.ts";
+
+type Props = Pick<ComponentProps<typeof Section>, "render" | "theme" | "paddingTop" | "paddingBottom"> & HTMLAttributes<"section">;
+const { render = true, theme = "dark", paddingTop = "none", paddingBottom = "none", ...rest } = Astro.props;
+const content = await slotContent(Astro.slots);
+---
+
+{render && content && (
+  <div class="hero-scroll_wrap" data-hero-scroll>
+    <div class="hero-scroll_stage">
+      <Section variant="hero" theme={theme} paddingTop={paddingTop} paddingBottom={paddingBottom} containerClass="width-full max-width-full" {...rest}>
+        <HeroBackdrop slot="background" />
+        <Fragment set:html={content} />
+      </Section>
+    </div>
+  </div>
+)}
+
+<script>
+  function initHeroScroll() {
+    document.querySelectorAll<HTMLElement>("[data-hero-scroll]").forEach(root => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = "true";
+      const stage = root.querySelector<HTMLElement>(".hero-scroll_stage")!;
+      const scene = root.querySelector<HTMLElement>("[data-residential-hvac]");
+      if (!scene) return;
+      const visual = root.querySelector<HTMLElement>("[data-hero-visual]") ?? scene;
+      const copy = root.querySelectorAll<HTMLElement>("[data-hero-copy]");
+      const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const desktop = window.matchMedia("(min-width: 64rem)");
+      const controller = new AbortController();
+      const options = { signal: controller.signal };
+      let frame = 0;
+      let enabled = false;
+      let travel = 0;
+      let stageHeight = 0;
+      let top = 0;
+      let lastProgress = -1;
+      let initialAnchorPending = true;
+      const update = () => {
+        frame = 0;
+        const bounds = root.getBoundingClientRect();
+        stage.inert = enabled && bounds.bottom - stageHeight <= top;
+        const distance = enabled ? Math.max(0, top - bounds.top) : 0;
+        const mobile = !desktop.matches && !motion.matches;
+        const sceneBounds = visual.getBoundingClientRect();
+        const mobileStart = window.innerHeight * 0.45;
+        const mobileEnd = top - sceneBounds.height * 0.35;
+        const mobileProgress = mobile ? Math.max(0, Math.min(1, (mobileStart - sceneBounds.top) / Math.max(1, mobileStart - mobileEnd))) : 0;
+        const progress = enabled ? Math.min(1, distance / (travel + stageHeight)) : mobileProgress;
+        if (progress === lastProgress) return;
+        lastProgress = progress;
+        const fade = enabled ? Math.min(1, distance / (travel * 0.38)) : 0;
+        const covered = enabled ? Math.max(0, Math.min(1, (distance - travel) / stageHeight)) : 0;
+        const nextSectionTop = bounds.bottom - stageHeight;
+        const fadeStart = window.innerHeight * 0.7;
+        const fadeEnd = window.innerHeight * 0.3;
+        const sceneFade = enabled ? Math.max(0, Math.min(1, (fadeStart - nextSectionTop) / Math.max(1, fadeStart - fadeEnd))) : 0;
+        root.style.setProperty("--hero-scene-opacity", String(1 - sceneFade));
+        root.style.setProperty("--hero-copy-opacity", String(1 - fade));
+        root.style.setProperty("--hero-copy-shift", `${-fade * 2}rem`);
+        copy.forEach(element => { element.inert = fade === 1; });
+        scene.dispatchEvent(new CustomEvent("hero-scroll-progress", { detail: { progress, covered, mobile } }));
+      };
+      const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+      const measure = () => {
+        top = parseFloat(getComputedStyle(stage).top) || 0;
+        const height = stage.getBoundingClientRect().height;
+        stageHeight = height;
+        enabled = desktop.matches && !motion.matches && scene.dataset.rendered === "true" && scene.dataset.unavailable !== "true" && height <= window.innerHeight - top + 2;
+        travel = window.innerHeight * 0.025;
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        root.style.setProperty("--hero-height", `${height / rem}rem`);
+        root.style.setProperty("--hero-travel", `${travel / rem}rem`);
+        root.dataset.pinned = String(enabled);
+        if (scene.dataset.rendered === "true" && initialAnchorPending) {
+          initialAnchorPending = false;
+          const anchor = document.getElementById(location.hash.slice(1));
+          if (enabled && anchor && (root.compareDocumentPosition(anchor) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+            requestAnimationFrame(() => anchor.scrollIntoView({ behavior: "instant", block: "start" }));
+          }
+        }
+        lastProgress = -1;
+        schedule();
+      };
+      const size = new ResizeObserver(measure);
+      size.observe(stage);
+      const ready = new MutationObserver(measure);
+      ready.observe(scene, { attributes: true, attributeFilter: ["data-rendered", "data-unavailable"] });
+      window.addEventListener("scroll", schedule, { ...options, passive: true });
+      window.addEventListener("resize", measure, options);
+      motion.addEventListener("change", measure, options);
+      desktop.addEventListener("change", measure, options);
+      measure();
+      document.addEventListener("astro:before-swap", () => {
+        controller.abort();
+        size.disconnect();
+        ready.disconnect();
+        cancelAnimationFrame(frame);
+      }, { once: true });
+    });
+  }
+  initHeroScroll();
+  document.addEventListener("astro:page-load", initHeroScroll);
+</script>
+
+<style is:global>
+  @layer components {
+    .hero-scroll_wrap {
+      position: relative;
+      isolation: isolate;
+      .hero-scroll_stage { top: var(--nav-height); }
+      &[data-pinned="true"] {
+        height: calc(var(--hero-height) * 2 + var(--hero-travel));
+        margin-bottom: calc(-1 * var(--hero-height));
+        .hero-scroll_stage { position: sticky; }
+      }
+    }
+  }
+</style>

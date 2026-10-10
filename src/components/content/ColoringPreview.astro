@@ -1,0 +1,51 @@
+---
+import coloringPage from "@/assets/images/clifts-logo-coloring-page.webp";
+import type { HTMLAttributes } from "astro/types";
+interface Props extends HTMLAttributes<"figure"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && (
+    <figure class:list={["coloring-preview_wrap", className]} {...rest}>
+      <a
+        href={coloringPage.src}
+        target="_blank"
+        rel="noopener"
+        aria-label="Open full-size coloring page"
+      >
+        <img
+          src={coloringPage.src}
+          alt="Black-and-white Clift's shield coloring page with a snowflake, tools and home symbols"
+          width="1472"
+          height="1616"
+          loading="lazy"
+        />
+      </a>
+      <figcaption>Right-click the picture to save and print it.</figcaption>
+    </figure>
+  )
+}
+<style is:global>
+  @layer components {
+    .coloring-preview_wrap {
+      background: var(--light-100);
+      color: var(--dark-900);
+      padding: var(--space-3);
+      width: 100%;
+      max-width: 27rem;
+      img {
+        aspect-ratio: 4/5;
+        object-fit: contain;
+      }
+      figcaption {
+        text-align: center;
+        font-size: var(--text-small);
+        margin-top: var(--space-2);
+      }
+    }
+  }
+</style>

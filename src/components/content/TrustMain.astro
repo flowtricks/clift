@@ -1,0 +1,47 @@
+---
+import type { HTMLAttributes } from "astro/types";
+type Props = HTMLAttributes<"ul"> & {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** List items. */
+  items?: { title: string }[];
+};
+const { render = true, items = [], class: className, ...rest } = Astro.props;
+const visibleItems = items.filter((item) => item.title?.trim());
+---
+
+{
+  render && visibleItems.length > 0 && (
+    <ul class:list={["trust-main_wrap", className]} {...rest} aria-label="Credentials and service focus">
+      {visibleItems.map(({ title }) => (
+        <li>
+          <span aria-hidden="true">✓</span>
+          {title}
+        </li>
+      ))}
+    </ul>
+  )
+}
+<style is:global>
+  @layer components {
+    .trust-main_wrap {
+      display: flex;
+      justify-content: var(--_alignment, start);
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-7);
+      padding-top: var(--space-4);
+      border-top: var(--border-width) solid var(--border);
+      width: 100%;
+      font-size: var(--text-small);
+      li {
+        display: flex;
+        gap: var(--space-1);
+        align-items: center;
+      }
+      span {
+        color: var(--text);
+      }
+    }
+  }
+</style>

@@ -1,0 +1,73 @@
+---
+import type { HTMLAttributes } from "astro/types";
+interface Props extends HTMLAttributes<"article"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+const { render = true, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && (
+    <article class:list={["filter-offer_wrap", className]} {...rest}>
+      <div class="filter-offer_content">
+        <span class="filter-offer_label">04 / FILTER SERVICE</span>
+        <h3 class="text-style-h3">Filters-only service</h3>
+        <p>
+          We replace your home's standard HVAC filters in one straightforward
+          visit. Standard filters are included; specialty media filters are
+          available at cost.
+        </p>
+        <div class="filter-offer_price">
+          <strong class="text-style-h3">$75</strong>
+          <span>Flat rate for filter service</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+<style is:global>
+  @layer components {
+    .filter-offer_wrap {
+      width: 100%;
+      padding: var(--space-2) 0;
+      border-top: var(--border-width) solid var(--border);
+      border-bottom: var(--border-width) solid var(--border);
+      .filter-offer_content {
+        min-width: 0;
+        padding-block: var(--space-4);
+      }
+      .filter-offer_label {
+        display: block;
+        color: var(--text);
+        font-family: var(--h5-font-family);
+        font-size: var(--text-small);
+        margin-bottom: var(--space-3);
+      }
+      p {
+        max-width: 72ch;
+        color: var(--text-2);
+        margin-top: var(--space-4);
+      }
+      .filter-offer_price {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-2) var(--space-3);
+        width: fit-content;
+        margin-top: var(--space-4);
+        color: var(--text);
+        strong {
+          color: inherit;
+          margin: 0;
+          line-height: 1;
+        }
+        span {
+          color: var(--text-2);
+          font-size: var(--text-small);
+          font-weight: var(--primary-medium);
+        }
+      }
+    }
+  }
+</style>

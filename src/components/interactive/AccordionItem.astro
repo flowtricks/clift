@@ -1,0 +1,148 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Heading from "@/components/typography/Heading.astro";
+import Icon from "@/components/media/Icon.astro";
+import arrow from "@/assets/icons/arrow.svg";
+import { slotContent } from "@/utils/slots.ts";
+
+type Props = HTMLAttributes<"details"> & {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Item heading. */
+  heading?: string;
+  /** Item layout. */
+  variant?: "default" | "compact" | "feature";
+  /** Heading level. */
+  headingTag?: "h2" | "h3" | "h4" | "h5" | "h6";
+  /** Open on load. */
+  open?: boolean;
+};
+
+const {
+  render = true,
+  heading,
+  variant = "default",
+  headingTag = "h3",
+  open = false,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const content = await slotContent(Astro.slots);
+---
+
+{
+  render && heading && content && (
+    <details
+      class:list={["accordion_item", variant !== "default" && variant, className]}
+      open={open}
+      data-accordion-group
+      {...rest}
+    >
+      <summary class="accordion_toggle">
+        <Heading tag={headingTag} variant={variant === "compact" ? "main" : variant === "feature" ? "h4" : "h5"} class="accordion_title">
+          {heading}
+        </Heading>
+        {variant === "feature" ? <span class="accordion_marker" aria-hidden="true" /> : <Icon class="accordion_icon" src={arrow} variant="small" />}
+      </summary>
+
+      <div class="accordion_body margin-trim">
+        <Fragment set:html={content} />
+      </div>
+    </details>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .accordion_item {
+      interpolate-size: allow-keywords;
+      border-bottom: var(--border-width) solid var(--border);
+      transition: border-color var(--hover-duration) var(--hover-ease);
+      &.compact {
+        --_accordion-padding: var(--space-4);
+        --_accordion-icon-color: var(--accent-500);
+        margin-top: var(--space-3);
+      }
+      &.feature {
+        --_accordion-padding: var(--space-5);
+        padding-inline: var(--site-margin);
+        &:last-child { border-bottom: 0; }
+        &[open] { color: var(--text); }
+      }
+      @media (hover: hover) {
+        &:hover {
+          border-bottom-color: currentcolor;
+        }
+      }
+    }
+
+    .accordion_toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding-block: var(--_accordion-padding, var(--space-5));
+      list-style: none;
+      cursor: pointer;
+      &::-webkit-details-marker {
+        display: none;
+      }
+    }
+
+    .accordion_title {
+      margin-block: 0;
+    }
+
+    .accordion_marker {
+      position: relative;
+      flex-shrink: 0;
+      width: 1.125rem;
+      height: 1.125rem;
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: calc(50% - 0.0625rem) 0 auto;
+        height: 0.125rem;
+        background: currentColor;
+      }
+      &::after {
+        rotate: 90deg;
+        transition: rotate var(--open-duration) var(--open-ease);
+      }
+    }
+    .accordion_item[open] .accordion_marker::after { rotate: 0deg; }
+    .accordion_item.feature .accordion_toggle:is(:hover, :focus-visible) { color: var(--accent-500); }
+
+    .accordion_icon {
+      color: var(--_accordion-icon-color, currentcolor);
+      rotate: 90deg;
+      transition: rotate var(--open-duration) var(--open-ease);
+    }
+
+    .accordion_item:is([open], .stacki-opened) .accordion_icon,
+    .stacki-designer .accordion_wrap.preview .accordion_icon {
+      rotate: -90deg;
+    }
+
+    .accordion_item::details-content {
+      block-size: 0;
+      overflow: hidden;
+      content-visibility: hidden;
+      transition:
+        block-size var(--open-duration) var(--open-ease),
+        content-visibility var(--open-duration) var(--open-ease) allow-discrete;
+    }
+
+    .accordion_item:is([open], .stacki-opened)::details-content,
+    .stacki-designer .accordion_wrap.preview .accordion_item::details-content {
+      block-size: auto;
+      content-visibility: visible;
+    }
+
+    .accordion_body {
+      padding-bottom: var(--_accordion-padding, var(--space-5));
+    }
+  }
+</style>
