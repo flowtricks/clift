@@ -1,6 +1,6 @@
 ---
-import heroImage from "@/assets/images/real-work-hero.jpg";
-import logoImage from "@/assets/images/clifts-logo.jpg";
+import shareImage from "@/assets/images/clifts-social-share.jpg";
+import favicon from "@/assets/images/favicon.svg?url";
 import { Font } from "astro:assets";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/consts.ts";
 import { isNoindexRoute } from "@/utils/seo.ts";
@@ -11,7 +11,7 @@ type Props = SeoProps;
 const {
   title,
   description = SITE_DESCRIPTION,
-  image = heroImage.src,
+  image = shareImage.src,
   type = "website",
   noindex,
 } = Astro.props;
@@ -40,11 +40,17 @@ const socialImage = new URL(image, Astro.site);
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={socialImage} />
+{image === shareImage.src && <meta property="og:image:width" content={String(shareImage.width)} />}
+{image === shareImage.src && <meta property="og:image:height" content={String(shareImage.height)} />}
+{image === shareImage.src && <meta property="og:image:alt" content="Clift’s Home & Air Services LLC — Your comfort. Handled. Residential HVAC in LaPlace, Louisiana." />}
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={socialImage} />
 
-<link rel="icon" type="image/jpeg" href={logoImage.src} />
+<link rel="icon" type="image/svg+xml" href={favicon} />
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta name="apple-mobile-web-app-title" content="Clift’s" />
 <meta name="generator" content={Astro.generator} />
